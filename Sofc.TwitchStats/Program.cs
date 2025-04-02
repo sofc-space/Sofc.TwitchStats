@@ -39,7 +39,7 @@ foreach (JsonObject game in games)
         break;
 }
 
-GenerateIcon(Path.Combine(output, "last.png"), 12345);
+GenerateIcon(Path.Combine(output, "last.png"), lastGame!.Value);
 GenerateIcon(Path.Combine(output, "first.png"), firstGame!.Value);
 
 

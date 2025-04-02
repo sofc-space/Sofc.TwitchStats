@@ -150,6 +150,4 @@ MappingRecord FindMapping(int rank)
     return mapping.First(kvp => rank <= kvp.Key).Value;
 }
 
-record MappingRecord(string Icon, string TextColor)
-{
-}
+record MappingRecord(string Icon, string TextColor);

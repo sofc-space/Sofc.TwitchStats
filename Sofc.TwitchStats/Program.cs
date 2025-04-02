@@ -16,32 +16,50 @@ var mapping = new Dictionary<int, MappingRecord>()
     { int.MaxValue, new MappingRecord("unusual", "#FED700") },
 };
 
-var options = new RestClientOptions("https://api.cs-prod.leetify.com/api/");
-var client = new RestClient(options);
-var request = new RestRequest($"profile/id/{steam64Id}");
-// The cancellation token comes from the caller. You can still make a call without it.
-var response = await client.ExecuteAsync<JsonObject>(request);
-
-var games = response.Data!["games"]!.AsArray();
-var firstGame = (int?)null;
-var lastGame = (int?)null;
-var today = new DateTimeOffset(DateTime.Today);
-foreach (JsonObject game in games)
+while (true)
 {
-    if(game == null || !game.ContainsKey("rankType") || game["rankType"]!.GetValue<int>() != 11)
-        continue;
-
-    firstGame = game["skillLevel"]!.GetValue<int>();
-    lastGame ??= firstGame;
-    
-    var dateTime = DateTimeOffset.Parse(game["gameFinishedAt"]!.ToString()).ToLocalTime();
-    if (dateTime < today)
-        break;
+    Console.WriteLine("Fetch Data");
+    try
+    {
+        await Generate();
+    }
+    catch (Exception e)
+    {
+        Console.WriteLine(e);
+    }
+    Thread.Sleep(TimeSpan.FromMinutes(5));
 }
 
-GenerateIcon(Path.Combine(output, "last.png"), lastGame!.Value);
-GenerateIcon(Path.Combine(output, "first.png"), firstGame!.Value);
 
+async Task Generate()
+{
+    var options = new RestClientOptions("https://api.cs-prod.leetify.com/api/");
+    var client = new RestClient(options);
+    var request = new RestRequest($"profile/id/{steam64Id}");
+// The cancellation token comes from the caller. You can still make a call without it.
+    var response = await client.ExecuteAsync<JsonObject>(request);
+
+    var games = response.Data!["games"]!.AsArray();
+    var firstGame = (int?)null;
+    var lastGame = (int?)null;
+    var today = new DateTimeOffset(DateTime.Today);
+    foreach (JsonObject game in games)
+    {
+        if(game == null || !game.ContainsKey("rankType") || game["rankType"]!.GetValue<int>() != 11)
+            continue;
+
+        firstGame = game["skillLevel"]!.GetValue<int>();
+        lastGame ??= firstGame;
+    
+        var dateTime = DateTimeOffset.Parse(game["gameFinishedAt"]!.ToString()).ToLocalTime();
+        if (dateTime < today)
+            break;
+    }
+
+    GenerateIcon(Path.Combine(output, "last.png"), lastGame!.Value);
+    GenerateIcon(Path.Combine(output, "first.png"), firstGame!.Value);
+
+}
 
 
 Console.WriteLine();

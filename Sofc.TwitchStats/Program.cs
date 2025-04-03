@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Nodes;
+using Newtonsoft.Json;
 using RestSharp;
 using SkiaSharp;
 
@@ -36,13 +37,13 @@ async Task Generate()
     var options = new RestClientOptions("https://api.cs-prod.leetify.com/api/");
     var client = new RestClient(options);
     var request = new RestRequest($"profile/id/{steam64Id}");
-// The cancellation token comes from the caller. You can still make a call without it.
     var response = await client.ExecuteAsync<JsonObject>(request);
 
     var games = response.Data!["games"]!.AsArray();
     var firstGame = (int?)null;
     var lastGame = (int?)null;
     var today = new DateTimeOffset(DateTime.Today);
+    var totals = new TotalRecord();
     foreach (JsonObject game in games)
     {
         if(game == null || !game.ContainsKey("rankType") || game["rankType"]!.GetValue<int>() != 11)
@@ -54,15 +55,75 @@ async Task Generate()
         var dateTime = DateTimeOffset.Parse(game["gameFinishedAt"]!.ToString()).ToLocalTime();
         if (dateTime < today)
             break;
+    
+        var requestGame = new RestRequest($"games/{game["gameId"]!.GetValue<string>()}");
+        var responseGame = await client.ExecuteAsync<JsonObject>(requestGame);
+
+        var playerStats = responseGame.Data!["playerStats"]!.AsArray().Cast<JsonObject>()
+            .First(obj => obj["steam64Id"]!.GetValue<string>() == steam64Id)!;
+        
+        totals.Games++;
+        totals.Kills += playerStats["totalKills"]!.GetValue<int>();
+        totals.Deaths += playerStats["totalDeaths"]!.GetValue<int>();
+        totals.HsSum += playerStats["hsp"]!.GetValue<double>();
+        totals.AdrSum += playerStats["dpr"]!.GetValue<double>();
+
+        var result = game["matchResult"]!.GetValue<string>();
+        switch (result)
+        {
+            case "win":
+                totals.Win++;
+                break;
+            case "loss":
+                totals.Loss++;
+                break;
+            case "tie":
+                totals.Draw++;
+                break;
+        }
+
+    }
+
+    if (totals.Games > 0)
+    {
+        totals.KdRate = (double)totals.Kills / totals.Deaths;
+        totals.HsRate = (decimal)totals.HsSum / totals.Games;
+        totals.WinRate = (decimal) totals.Win / (totals.Win + totals.Loss);
+        totals.Adr = (double) totals.AdrSum / (totals.Games);
     }
 
     GenerateIcon(Path.Combine(output, "last.png"), lastGame!.Value);
     GenerateIcon(Path.Combine(output, "first.png"), firstGame!.Value);
 
+    GenerateStats(Path.Combine(output, "cs2stats"), totals);
+
 }
 
 
 Console.WriteLine();
+
+
+void GenerateStats(string path, TotalRecord totals)
+{
+    //File.WriteAllText(file, JsonConvert.SerializeObject(totals));
+    foreach (var propertyInfo in totals.GetType().GetProperties())
+    {
+        var value = string.Empty;
+        if (propertyInfo.PropertyType == typeof(decimal))
+        {
+            value = ((decimal)propertyInfo.GetValue(totals)!).ToString("P");
+        }
+        else if (propertyInfo.PropertyType == typeof(double))
+        {
+            value = ((double)propertyInfo.GetValue(totals)!).ToString("N2");
+        }
+        else
+        {
+            value = propertyInfo.GetValue(totals)!.ToString();
+        }
+        File.WriteAllText(Path.Combine(path, $"{propertyInfo.Name}.txt"), value);
+    }
+}
 
 void GenerateIcon(string file, int rank)
 {
@@ -151,3 +212,19 @@ MappingRecord FindMapping(int rank)
 }
 
 record MappingRecord(string Icon, string TextColor);
+
+public record TotalRecord
+{
+    public int Kills { get; set; }
+    public int Deaths { get; set; }
+    public int Games { get; set; }
+    public double HsSum { get; set; }
+    public double AdrSum { get; set; }
+    public double KdRate { get; set; }
+    public int Win { get; set; }
+    public int Loss { get; set; }
+    public int Draw { get; set; }
+    public decimal HsRate { get; set; }
+    public decimal WinRate { get; set; }
+    public double Adr { get; set; }
+}

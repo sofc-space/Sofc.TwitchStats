@@ -1,5 +1,4 @@
 ﻿using System.Text.Json.Nodes;
-using Newtonsoft.Json;
 using RestSharp;
 using SkiaSharp;
 
@@ -42,19 +41,28 @@ async Task Generate()
     var games = response.Data!["games"]!.AsArray();
     var firstGame = (int?)null;
     var lastGame = (int?)null;
-    var today = new DateTimeOffset(DateTime.Today);
+    var lastMatchDateTime = (DateTimeOffset?) null;
     var totals = new TotalRecord();
     foreach (JsonObject game in games)
     {
-        if(game == null || !game.ContainsKey("rankType") || game["rankType"]!.GetValue<int>() != 11)
+        if(game == null || game["dataSource"]!.GetValue<string>() == "faceit") //TODO FaceIT und Skeleton-Stats lesen
             continue;
 
-        firstGame = game["skillLevel"]!.GetValue<int>();
-        lastGame ??= firstGame;
-    
+        if (game["rankType"]!.GetValue<int>() == 11)
+        {
+            firstGame = game["skillLevel"]!.GetValue<int>();
+            lastGame ??= firstGame;
+        }
+        
         var dateTime = DateTimeOffset.Parse(game["gameFinishedAt"]!.ToString()).ToLocalTime();
-        if (dateTime < today)
+        if (lastMatchDateTime != null && lastMatchDateTime.Value - dateTime > TimeSpan.FromHours(3))
+        {
+            if(game["rankType"]!.GetValue<int>() != 11)
+                continue;
             break;
+        }
+
+        lastMatchDateTime = dateTime;
     
         var requestGame = new RestRequest($"games/{game["gameId"]!.GetValue<string>()}");
         var responseGame = await client.ExecuteAsync<JsonObject>(requestGame);
@@ -63,10 +71,12 @@ async Task Generate()
             .First(obj => obj["steam64Id"]!.GetValue<string>() == steam64Id)!;
         
         totals.Games++;
-        totals.Kills += playerStats["totalKills"]!.GetValue<int>();
+        var kills = playerStats["totalKills"]!.GetValue<int>();
+        totals.Kills += kills; 
         totals.Deaths += playerStats["totalDeaths"]!.GetValue<int>();
-        totals.HsSum += playerStats["hsp"]!.GetValue<double>();
-        totals.AdrSum += playerStats["dpr"]!.GetValue<double>();
+        totals.HsKills += (int) Math.Round(playerStats["hsp"]!.GetValue<double>() * kills);
+        totals.TotalDamage += playerStats["totalDamage"]!.GetValue<int>();
+        totals.RoundSum += responseGame.Data!["teamScores"]!.AsArray().Sum(i => i!.GetValue<int>());
 
         var result = game["matchResult"]!.GetValue<string>();
         switch (result)
@@ -87,9 +97,9 @@ async Task Generate()
     if (totals.Games > 0)
     {
         totals.KdRate = (double)totals.Kills / totals.Deaths;
-        totals.HsRate = (decimal)totals.HsSum / totals.Games;
+        totals.HsRate = (decimal)totals.HsKills / totals.Kills;
         totals.WinRate = (decimal) totals.Win / (totals.Win + totals.Loss);
-        totals.Adr = (double) totals.AdrSum / (totals.Games);
+        totals.Adr = (double) totals.TotalDamage / totals.RoundSum;
     }
 
     GenerateIcon(Path.Combine(output, "last.png"), lastGame!.Value);
@@ -218,8 +228,9 @@ public record TotalRecord
     public int Kills { get; set; }
     public int Deaths { get; set; }
     public int Games { get; set; }
-    public double HsSum { get; set; }
-    public double AdrSum { get; set; }
+    public int HsKills { get; set; }
+    public int TotalDamage { get; set; }
+    public int RoundSum { get; set; }
     public double KdRate { get; set; }
     public int Win { get; set; }
     public int Loss { get; set; }

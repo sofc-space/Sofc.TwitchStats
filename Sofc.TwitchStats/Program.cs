@@ -45,10 +45,12 @@ async Task Generate()
     var totals = new TotalRecord();
     foreach (JsonObject game in games)
     {
-        if(game == null || game["dataSource"]!.GetValue<string>() == "faceit") //TODO FaceIT und Skeleton-Stats lesen
+        if(game == null)
             continue;
 
-        if (game["rankType"]!.GetValue<int>() == 11)
+        var rankType = game["rankType"]?.GetValue<int>() ?? -1;
+
+        if (rankType == 11)
         {
             firstGame = game["skillLevel"]!.GetValue<int>();
             lastGame ??= firstGame;
@@ -57,7 +59,7 @@ async Task Generate()
         var dateTime = DateTimeOffset.Parse(game["gameFinishedAt"]!.ToString()).ToLocalTime();
         if (lastMatchDateTime != null && lastMatchDateTime.Value - dateTime > TimeSpan.FromHours(3))
         {
-            if(game["rankType"]!.GetValue<int>() != 11)
+            if(rankType != 11)
                 continue;
             break;
         }
@@ -67,39 +69,62 @@ async Task Generate()
         var requestGame = new RestRequest($"games/{game["gameId"]!.GetValue<string>()}");
         var responseGame = await client.ExecuteAsync<JsonObject>(requestGame);
 
-        var playerStats = responseGame.Data!["playerStats"]!.AsArray().Cast<JsonObject>()
-            .First(obj => obj["steam64Id"]!.GetValue<string>() == steam64Id)!;
-        
-        totals.Games++;
-        var kills = playerStats["totalKills"]!.GetValue<int>();
-        totals.Kills += kills; 
-        totals.Deaths += playerStats["totalDeaths"]!.GetValue<int>();
-        totals.HsKills += (int) Math.Round(playerStats["hsp"]!.GetValue<double>() * kills);
-        totals.TotalDamage += playerStats["totalDamage"]!.GetValue<int>();
-        totals.RoundSum += responseGame.Data!["teamScores"]!.AsArray().Sum(i => i!.GetValue<int>());
+        var status = responseGame.Data!["status"]!.GetValue<string>();
 
-        var result = game["matchResult"]!.GetValue<string>();
-        switch (result)
+        if (status == "error" && responseGame.Data!.ContainsKey("gamePlayerRoundSkeletonStats"))
         {
-            case "win":
+            var playerStats = responseGame.Data!["gamePlayerRoundSkeletonStats"]!.AsArray().Cast<JsonObject>()
+                .FirstOrDefault(obj => obj["steam64Id"]!.GetValue<string>() == steam64Id);
+            if(playerStats == null)
+                continue;
+            
+            totals.Games++;
+            totals.ShadowKills += playerStats["kills"]!.GetValue<int>();
+            totals.ShadowDeaths += playerStats["deaths"]!.GetValue<int>();
+            if (playerStats["isWon"]!.GetValue<bool>())
                 totals.Win++;
-                break;
-            case "loss":
+            else
                 totals.Loss++;
-                break;
-            case "tie":
-                totals.Draw++;
-                break;
+        }
+        else if (status == "ready")
+        {
+            var playerStats = responseGame.Data!["playerStats"]!.AsArray().Cast<JsonObject>()
+                .First(obj => obj["steam64Id"]!.GetValue<string>() == steam64Id)!;
+        
+            totals.Games++;
+            var kills = playerStats["totalKills"]!.GetValue<int>();
+            totals.Kills += kills; 
+            totals.Deaths += playerStats["totalDeaths"]!.GetValue<int>();
+            totals.HsKills += (int) Math.Round(playerStats["hsp"]!.GetValue<double>() * kills);
+            totals.TotalDamage += playerStats["totalDamage"]!.GetValue<int>();
+            totals.RoundSum += responseGame.Data!["teamScores"]!.AsArray().Sum(i => i!.GetValue<int>());
+
+            var result = game["matchResult"]!.GetValue<string>();
+            switch (result)
+            {
+                case "win":
+                    totals.Win++;
+                    break;
+                case "loss":
+                    totals.Loss++;
+                    break;
+                case "tie":
+                    totals.Draw++;
+                    break;
+            }
         }
 
     }
 
     if (totals.Games > 0)
     {
-        totals.KdRate = (double)totals.Kills / totals.Deaths;
         totals.HsRate = (decimal)totals.HsKills / totals.Kills;
         totals.WinRate = (decimal) totals.Win / (totals.Win + totals.Loss);
         totals.Adr = (double) totals.TotalDamage / totals.RoundSum;
+
+        totals.Kills += totals.ShadowKills;
+        totals.Deaths += totals.ShadowDeaths;
+        totals.KdRate = (double)totals.Kills / totals.Deaths;
     }
 
     GenerateIcon(Path.Combine(output, "last.png"), lastGame!.Value);
@@ -226,7 +251,9 @@ record MappingRecord(string Icon, string TextColor);
 public record TotalRecord
 {
     public int Kills { get; set; }
+    public int ShadowKills { get; set; }
     public int Deaths { get; set; }
+    public int ShadowDeaths { get; set; }
     public int Games { get; set; }
     public int HsKills { get; set; }
     public int TotalDamage { get; set; }

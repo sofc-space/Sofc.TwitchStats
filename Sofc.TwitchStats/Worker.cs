@@ -2,7 +2,12 @@ using Microsoft.Extensions.Options;
 using Sofc.TwitchStats.Configuration;
 using Sofc.TwitchStats.Service;
 
-public class Worker(IOptions<AppConfig> options, GeneratorService generatorService, ImageOutputService imageOutputService, ValuesOutputService valuesOutputService) : BackgroundService
+public class Worker(
+    IOptions<AppConfig> options,
+    GeneratorService generatorService,
+    ImageOutputService imageOutputService,
+    ValuesOutputService valuesOutputService,
+    ILogger<Worker> logger) : BackgroundService
 {
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -16,6 +21,7 @@ public class Worker(IOptions<AppConfig> options, GeneratorService generatorServi
                 {
                     try
                     {
+                        logger.LogInformation($"Start generating Stats for Steam64Id {entry.Steam64Id}");
                         var total = await generatorService.GenerateStats(entry);
 
                         var output = EnsureDirectoryExists(entry.OutputPath);
@@ -26,12 +32,14 @@ public class Worker(IOptions<AppConfig> options, GeneratorService generatorServi
                         var valuesPath = EnsureDirectoryExists(Path.Combine(output, "values"));
                         
                         await valuesOutputService.WriteTotalStats(valuesPath, total);
+                        logger.LogInformation($"Finished generating Stats for Steam64Id {entry.Steam64Id}");
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine(e);
+                        logger.LogError(e.Message);
                     }
                 }
+                logger.LogInformation($"zZzzzz");
                 await Task.Delay(TimeSpan.FromMinutes(2), stoppingToken);
             }
         }

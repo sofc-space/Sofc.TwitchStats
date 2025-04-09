@@ -1,48 +1,52 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Sofc.TwitchStats.Api.Data.Leetify;
+using StackExchange.Redis;
 
 namespace Sofc.TwitchStats.Api.Service;
 
-public class LeetifyCacheService(ILeetifyWebService leetifyWebService, ILogger<LeetifyCacheService> logger)
+public class LeetifyCacheService
 {
     
-    private readonly IDictionary<Guid, LeetifyGame> _games = new Dictionary<Guid, LeetifyGame>();
-    private readonly IDictionary<string, CachedProfile> _profiles = new Dictionary<string, CachedProfile>();
+    private readonly ILeetifyWebService _leetifyWebService;
+    private readonly ILogger<LeetifyCacheService> _logger;
+    private readonly IDatabase _database;
+
+    public LeetifyCacheService(ILeetifyWebService leetifyWebService, ILogger<LeetifyCacheService> logger, IConnectionMultiplexer connectionMultiplexer)
+    {
+        _leetifyWebService = leetifyWebService;
+        _logger = logger;
+        _database = connectionMultiplexer.GetDatabase();
+    }
 
     public async Task<LeetifyGame> GetGame(Guid gameId)
     {
-        if (_games.TryGetValue(gameId, out var game1)) return game1;
-        
-        var game = await leetifyWebService.GetGame(gameId);
-        _games.Add(gameId, game);
+        var key = $"game:{gameId:D}";
+        var game = await GetObject<LeetifyGame>(key);
+        if (game != null) return game;
+        game = await _leetifyWebService.GetGame(gameId);
+        await SetObject(key, game);
         return game;
     }
 
     public async Task<LeetifyProfile> GetProfile(string profileId)
     {
-        if (_profiles.TryGetValue(profileId, out var profile) && profile.CreatedAt > DateTimeOffset.Now.AddMinutes(-1)) return profile.Profile;
-        try
-        {
-            var leetifyProfile = await leetifyWebService.GetProfile(profileId);
-            var cached = new CachedProfile
-            {
-                CreatedAt = DateTimeOffset.Now,
-                Profile = leetifyProfile,
-            };
-            _profiles.Add(profileId, cached);
-            return leetifyProfile;
-        }
-        catch (Exception e)
-        {
-            logger.LogError(e, e.Message);
-            if (profile != null)
-                return profile.Profile;
-            throw;
-        }
+        var key = $"profile:{profileId}";
+        var profile = await GetObject<LeetifyProfile>(key);
+        if (profile != null) return profile;
+        var leetifyProfile = await _leetifyWebService.GetProfile(profileId);
+        await SetObject(key, leetifyProfile, TimeSpan.FromMinutes(1));
+        return leetifyProfile;
     }
-    
-    class CachedProfile
+
+    private async Task SetObject<T>(string key, T value, TimeSpan? expiry = null)
     {
-        public DateTimeOffset CreatedAt { get; set; }
-        public LeetifyProfile Profile { get; set; }
+        await _database.StringSetAsync(key, JsonSerializer.Serialize(value), expiry);
+    }
+
+    private async Task<T?> GetObject<T>(string key)
+    {
+        var str = await _database.StringGetAsync(key);
+        return str.IsNull ? default : JsonSerializer.Deserialize<T>(str.ToString());
     }
 }

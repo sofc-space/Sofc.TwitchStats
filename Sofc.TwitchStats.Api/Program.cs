@@ -3,6 +3,7 @@ using Sofc.TwitchStats.Api;
 using Sofc.TwitchStats.Api.Data.Api;
 using Sofc.TwitchStats.Api.Data.Configuration;
 using Sofc.TwitchStats.Api.Service;
+using StackExchange.Redis;
 
 var  MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 var builder = WebApplication.CreateBuilder(args);
@@ -29,7 +30,8 @@ builder.Services.AddRefitClient<ILeetifyWebService>()
         c.Timeout = TimeSpan.FromSeconds(10);
     });
 builder.Services.AddScoped<GeneratorService>();
-builder.Services.AddSingleton<LeetifyCacheService>();
+builder.Services.AddScoped<LeetifyCacheService>();
+builder.Services.AddScoped<IConnectionMultiplexer>(s => ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("Redis")!));
 builder.Services.Configure<MetaOptions>(builder.Configuration.GetSection("Meta"));
 
 var app = builder.Build();

@@ -1,9 +1,11 @@
+using Microsoft.Extensions.Options;
+using Sofc.TwitchStats.Api.Data.Configuration;
 using Sofc.TwitchStats.Api.Data.Leetify;
 using Sofc.TwitchStats.Api.Data.Output;
 
 namespace Sofc.TwitchStats.Api.Service;
 
-public class GeneratorService(LeetifyCacheService leetifyCacheService)
+public class GeneratorService(LeetifyCacheService leetifyCacheService, IOptions<MetaOptions> metaOptions)
 {
     public async Task<TotalRecord> GenerateStats(string steam64Id, int threshold)
     {
@@ -25,7 +27,7 @@ public class GeneratorService(LeetifyCacheService leetifyCacheService)
                 if(game.RankType == 11)
                     beginPremierFound = true;
                 
-                if (dateTime > new DateTimeOffset(new DateTime(2025, 1, 29)).AddMinutes(30))
+                if (dateTime > new DateTimeOffset(metaOptions.Value.CurrentPremierSeasonStart).AddMinutes(30))
                 {
                     AddPremierSeasonStats(game, total);
                     continue;

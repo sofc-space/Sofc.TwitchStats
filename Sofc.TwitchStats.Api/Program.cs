@@ -1,6 +1,7 @@
 using Refit;
 using Sofc.TwitchStats.Api;
 using Sofc.TwitchStats.Api.Data.Api;
+using Sofc.TwitchStats.Api.Data.Configuration;
 using Sofc.TwitchStats.Api.Service;
 
 var  MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
@@ -29,6 +30,7 @@ builder.Services.AddRefitClient<ILeetifyWebService>()
     });
 builder.Services.AddScoped<GeneratorService>();
 builder.Services.AddSingleton<LeetifyCacheService>();
+builder.Services.Configure<MetaOptions>(builder.Configuration.GetSection("Meta"));
 
 var app = builder.Build();
 

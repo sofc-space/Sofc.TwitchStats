@@ -1,6 +1,4 @@
 using Refit;
-using Sofc.TwitchStats.Api;
-using Sofc.TwitchStats.Api.Data.Api;
 using Sofc.TwitchStats.Api.Data.Configuration;
 using Sofc.TwitchStats.Api.Service;
 using StackExchange.Redis;
@@ -31,6 +29,8 @@ builder.Services.AddRefitClient<ILeetifyWebService>()
     });
 builder.Services.AddScoped<GeneratorService>();
 builder.Services.AddScoped<LeetifyCacheService>();
+builder.Services.AddScoped<ResultCacheService>();
+builder.Services.AddScoped<CacheService>();
 builder.Services.AddScoped<IConnectionMultiplexer>(s => ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("Redis")!));
 builder.Services.Configure<MetaOptions>(builder.Configuration.GetSection("Meta"));
 

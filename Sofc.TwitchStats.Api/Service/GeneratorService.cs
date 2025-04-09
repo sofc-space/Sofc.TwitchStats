@@ -11,21 +11,31 @@ public class GeneratorService(LeetifyCacheService leetifyCacheService)
         var total = new TotalRecord();
         
         var lastMatchDateTime = (DateTimeOffset?) null;
+        var beginPremierFound = false;
         foreach (var game in profile.Games)
         {
-            
-            GeneratePremierStats(game, total);
+            if (!beginPremierFound)
+            {
+                GeneratePremierStats(game, total);
+            }
             
             var dateTime = game.GameFinishedAt.ToLocalTime();
             if (lastMatchDateTime != null && lastMatchDateTime.Value - dateTime > TimeSpan.FromHours(threshold))
             {
-                if(game.RankType != 11)
+                if(game.RankType == 11)
+                    beginPremierFound = true;
+                
+                if (dateTime > new DateTimeOffset(new DateTime(2025, 1, 29)).AddMinutes(30))
+                {
+                    AddPremierSeasonStats(game, total);
                     continue;
+                }
                 break;
             }
             
             lastMatchDateTime = total.FirstMatch = dateTime;
             total.LastMatch ??= dateTime;
+            AddPremierSeasonStats(game, total);
 
             await GenerateGameStats(game, steam64Id, total);
         }
@@ -35,12 +45,32 @@ public class GeneratorService(LeetifyCacheService leetifyCacheService)
         return total;
     }
 
+    private static void AddPremierSeasonStats(LeetifyListGame game, TotalRecord total)
+    {
+        if (game.RankType == 11)
+        {
+            switch (game.MatchResult)
+            {
+                case LeetifyMatchResult.Win:
+                    total.PremierSeasonWins++;
+                    break;
+                case LeetifyMatchResult.Loss:
+                    total.PremierSeasonLosses++;
+                    break;
+                case LeetifyMatchResult.Tie:
+                    total.PremierSeasonDraws++;
+                    break;
+            }
+        }
+    }
+
     private static void GenerateTotalStats(TotalRecord total)
     {
         if (total.Games <= 0) return;
         if(total.Kills > 0)
             total.HsRate = (decimal)total.HsKills / total.Kills;
-        total.WinRate = (decimal) total.Win / (total.Win + total.Loss);
+        total.WinRate = (decimal) total.Win / (total.Win + total.Draw + total.Loss);
+        total.PremierSeasonWinRate = (decimal) total.PremierSeasonWins / (total.PremierSeasonWins + total.PremierSeasonDraws + total.PremierSeasonLosses);
         if(total.RoundSum > 0)
             total.Adr = (decimal) total.TotalDamage / total.RoundSum;
 

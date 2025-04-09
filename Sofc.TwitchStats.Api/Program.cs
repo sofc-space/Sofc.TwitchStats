@@ -22,7 +22,11 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
 builder.Services.AddRefitClient<ILeetifyWebService>()
-    .ConfigureHttpClient(c => c.BaseAddress = new Uri("https://api.cs-prod.leetify.com/api"));
+    .ConfigureHttpClient(c =>
+    {
+        c.BaseAddress = new Uri("https://api.cs-prod.leetify.com/api");
+        c.Timeout = TimeSpan.FromSeconds(10);
+    });
 builder.Services.AddScoped<GeneratorService>();
 builder.Services.AddSingleton<LeetifyCacheService>();
 

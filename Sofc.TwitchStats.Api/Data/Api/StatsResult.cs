@@ -16,4 +16,7 @@ public class StatsResult
     public int Losses { get; set; }
     public DateTimeOffset FirstMatch { get; set; }
     public DateTimeOffset LastMatch { get; set; }
+    public int PremierSeasonWins { get; set; }
+    public int PremierSeasonDraws { get; set; }
+    public int PremierSeasonLosses { get; set; }
 }

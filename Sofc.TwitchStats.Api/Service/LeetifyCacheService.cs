@@ -2,7 +2,7 @@ using Sofc.TwitchStats.Api.Data.Leetify;
 
 namespace Sofc.TwitchStats.Api.Service;
 
-public class LeetifyCacheService(ILeetifyWebService leetifyWebService)
+public class LeetifyCacheService(ILeetifyWebService leetifyWebService, ILogger<LeetifyCacheService> logger)
 {
     
     private readonly IDictionary<Guid, LeetifyGame> _games = new Dictionary<Guid, LeetifyGame>();
@@ -20,14 +20,24 @@ public class LeetifyCacheService(ILeetifyWebService leetifyWebService)
     public async Task<LeetifyProfile> GetProfile(string profileId)
     {
         if (_profiles.TryGetValue(profileId, out var profile) && profile.CreatedAt > DateTimeOffset.Now.AddMinutes(-1)) return profile.Profile;
-        var leetifyProfile = await leetifyWebService.GetProfile(profileId);
-        var cached = new CachedProfile
+        try
         {
-            CreatedAt = DateTimeOffset.Now,
-            Profile = leetifyProfile,
-        };
-        _profiles.Add(profileId, cached);
-        return leetifyProfile;
+            var leetifyProfile = await leetifyWebService.GetProfile(profileId);
+            var cached = new CachedProfile
+            {
+                CreatedAt = DateTimeOffset.Now,
+                Profile = leetifyProfile,
+            };
+            _profiles.Add(profileId, cached);
+            return leetifyProfile;
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, e.Message);
+            if (profile != null)
+                return profile.Profile;
+            throw;
+        }
     }
     
     class CachedProfile

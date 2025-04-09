@@ -30,6 +30,9 @@ public class StatsController(GeneratorService generatorService) : ControllerBase
             Losses = stats.Loss,
             FirstMatch = stats.FirstMatch,
             LastMatch = stats.LastMatch!.Value,
+            PremierSeasonWins = stats.PremierSeasonWins,
+            PremierSeasonDraws = stats.PremierSeasonDraws,
+            PremierSeasonLosses = stats.PremierSeasonLosses,
         };
     }
 }

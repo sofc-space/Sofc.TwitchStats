@@ -19,4 +19,5 @@ public class StatsResult
     public int PremierSeasonWins { get; set; }
     public int PremierSeasonDraws { get; set; }
     public int PremierSeasonLosses { get; set; }
+    public decimal PremierSeasonWinRate { get; set; }
 }

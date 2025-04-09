@@ -33,6 +33,7 @@ public class StatsController(GeneratorService generatorService) : ControllerBase
             PremierSeasonWins = stats.PremierSeasonWins,
             PremierSeasonDraws = stats.PremierSeasonDraws,
             PremierSeasonLosses = stats.PremierSeasonLosses,
+            PremierSeasonWinRate = stats.PremierSeasonWinRate,
         };
     }
 }

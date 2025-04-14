@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Options;
 using Sofc.TwitchStats.Api.Data.Configuration;
 using Sofc.TwitchStats.Api.Data.Leetify;
+using Sofc.TwitchStats.Api.Data.Leetify.V2Api.Match;
 using Sofc.TwitchStats.Api.Data.Totals;
 
 namespace Sofc.TwitchStats.Api.Service;
@@ -89,17 +90,14 @@ public class GeneratorService(LeetifyCacheService leetifyCacheService, IOptions<
             return;
         }
         
-        var gameDetail = await leetifyCacheService.GetGame(guid);
+        var matchDetail = await leetifyCacheService.GetV2Match(guid);
 
-        if (gameDetail.Status == LeetifyGameStatus.Error && gameDetail.GamePlayerRoundSkeletonStats.Any())
-        {
-            GenerateSkeletonStats(gameDetail.GamePlayerRoundSkeletonStats.First(s => s.Steam64Id == steam64Id), total);
-        }
+        //if (matchDetail.Status == LeetifyGameStatus.Error && gameDetail.GamePlayerRoundSkeletonStats.Any())
+        //{
+        //    GenerateSkeletonStats(gameDetail.GamePlayerRoundSkeletonStats.First(s => s.Steam64Id == steam64Id), total);
+        //}
 
-        if (gameDetail.Status == LeetifyGameStatus.Ready)
-        {
-            GeneratePlayerStats(game, gameDetail.PlayerStats.First(s => s.Steam64Id == steam64Id), total, steam64Id);
-        }
+        GeneratePlayerStats(game, matchDetail.Stats.First(s => s.Steam64Id == steam64Id), total, steam64Id);
         
     }
     
@@ -137,33 +135,22 @@ public class GeneratorService(LeetifyCacheService leetifyCacheService, IOptions<
         }
     }
 
-    private static void GeneratePlayerStats(LeetifyListGame game, LeetifyGamePlayerStat stat, TotalRecord total, string steam64Id)
+    private static void GeneratePlayerStats(LeetifyListGame game, LeetifyV2PlayerStats player, TotalRecord total, string steam64Id)
     {
         total.Games++;
-        var kills = stat.TotalKills;
+        var kills = player.TotalKills;
         total.Kills += kills; 
-        total.Deaths += stat.TotalDeaths;
-        total.HsKills += (int) Math.Round(stat.Hsp * kills);
-        total.TotalDamage += stat.TotalDamage;
-        GenerateRounds(game, steam64Id, total);
-        
-        switch (game.MatchResult)
-        {
-            case LeetifyMatchResult.Win:
-                total.Win++;
-                break;
-            case LeetifyMatchResult.Loss:
-                total.Loss++;
-                break;
-            case LeetifyMatchResult.Tie:
-                total.Draw++;
-                break;
-        }
-    }
+        total.Deaths += player.TotalDeaths;
+        total.HsKills += player.TotalHsKills;
+        total.TotalDamage += player.TotalDamage;
+        total.RoundSum += player.RoundsCount;
 
-    private static void GenerateRounds(LeetifyListGame game, string steam64Id, TotalRecord total)
-    {
-        total.RoundSum += game.OwnTeamTotalLeetifyRatingRounds.First(r => r.Key == steam64Id)!.Value;
+        if (player.RoundsWon > player.RoundsLost)
+            total.Win++;
+        else if (player.RoundsWon < player.RoundsLost)
+            total.Loss++;
+        else
+            total.Draw++;
     }
 
     private static void GeneratePremierStats(LeetifyListGame game, TotalRecord total)

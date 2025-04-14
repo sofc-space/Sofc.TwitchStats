@@ -24,10 +24,10 @@ jobs:
     - name: Publish
       run: dotnet publish --no-self-contained -o publish/ -c Release
     - name: Stop Backend
-      run: sudo systemctl stop backend
+      run: sudo systemctl stop SofcsStats.service
     - name: Remove old Backend files
       run: sudo rm -rf /src/backend/*
     - name: Deploy files
       run: sudo mv publish/* /src/backend/
     - name: Start Backend
-      run: sudo systemctl start backend
+      run: sudo systemctl start SofcsStats.service

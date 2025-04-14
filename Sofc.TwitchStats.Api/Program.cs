@@ -1,7 +1,10 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AutoMapper;
 using Refit;
+using Sofc.TwitchStats.Api.Data.Api;
 using Sofc.TwitchStats.Api.Data.Configuration;
+using Sofc.TwitchStats.Api.Data.Leetify.V2Api.Profile;
 using Sofc.TwitchStats.Api.Service;
 using StackExchange.Redis;
 
@@ -58,6 +61,8 @@ builder.Services.AddScoped<CacheService>();
 builder.Services.AddScoped<IConnectionMultiplexer>(s => ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("Redis")!));
 builder.Services.Configure<MetaOptions>(builder.Configuration.GetSection("Meta"));
 
+builder.Services.AddAutoMapper(typeof(LeetifyToResultMapperProfile));
+
 var app = builder.Build();
 
 //using var scope = app.Services.CreateScope();
@@ -85,5 +90,15 @@ public class HttpLoggingHandler(ILogger<HttpLoggingHandler> logger) : Delegating
         logger.LogInformation("[{Id}] Request: {Request}", id, request);
         logger.LogInformation("[{Id}] Response: {Response}", id, response);
         return response;
+    }
+}
+
+public class LeetifyToResultMapperProfile : Profile
+{
+    public LeetifyToResultMapperProfile()
+    {
+        CreateMap<LeetifyV2Ranks, LeetifyRanksStatsResult>();
+        CreateMap<LeetifyV2Stats, LeetifyStatsStatsResult>();
+        CreateMap<LeetifyV2Rating, LeetifyRatingStatsResult>();
     }
 }

@@ -1,3 +1,6 @@
+using System.Text.Json.Serialization;
+using Sofc.TwitchStats.Api.Data.Leetify.V2Api.Profile;
+
 namespace Sofc.TwitchStats.Api.Data.Totals;
 
 public record TotalRecord
@@ -19,6 +22,9 @@ public record TotalRecord
     public decimal? Adr { get; set; }
     public DateTimeOffset FirstMatch { get; set; }
     public DateTimeOffset? LastMatch { get; set; }
+    public decimal LeetifyRatingSum { get; set; }
+    public decimal LeetifyRating { get; set; }
+    
 
     public int? PremierStart { get; set; }
     public int? PremierCurrent { get; set; }
@@ -26,4 +32,17 @@ public record TotalRecord
     public int PremierSeasonDraws { get; set; }
     public int PremierSeasonLosses { get; set; }
     public decimal PremierSeasonWinRate { get; set; }
+
+    public LeetifyTotal LeetifyTotal { get; set; }
+}
+
+public class LeetifyTotal
+{
+    public decimal Winrate { get; set; }
+    
+    public LeetifyV2Ranks Ranks { get; set; }
+
+    public LeetifyV2Rating Rating { get; set; }
+
+    public LeetifyV2Stats Stats { get; set; }
 }

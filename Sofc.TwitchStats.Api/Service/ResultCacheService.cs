@@ -1,8 +1,9 @@
+using AutoMapper;
 using Sofc.TwitchStats.Api.Data.Api;
 
 namespace Sofc.TwitchStats.Api.Service;
 
-public class ResultCacheService(GeneratorService generatorService, CacheService cacheService)
+public class ResultCacheService(GeneratorService generatorService, CacheService cacheService, IMapper mapper)
 {
     public async Task<StatsResult> GetStatsResult(string steam64Id, int sessionDetectionThreshold)
     {
@@ -33,6 +34,14 @@ public class ResultCacheService(GeneratorService generatorService, CacheService 
             PremierSeasonDraws = generatorStats.PremierSeasonDraws,
             PremierSeasonLosses = generatorStats.PremierSeasonLosses,
             PremierSeasonWinRate = generatorStats.PremierSeasonWinRate,
+            LeetifyRating = generatorStats.LeetifyRating,
+            Overall = new LeetifyStatsResult
+            {
+                Winrate = generatorStats.LeetifyTotal.Winrate,
+                Rating = mapper.Map<LeetifyRatingStatsResult>(generatorStats.LeetifyTotal.Rating),
+                Ranks = mapper.Map<LeetifyRanksStatsResult>(generatorStats.LeetifyTotal.Ranks),
+                Stats = mapper.Map<LeetifyStatsStatsResult>(generatorStats.LeetifyTotal.Stats),
+            }
         };
         await cacheService.SetObjectAsync(key, stats, TimeSpan.FromMinutes(1));
         return stats;

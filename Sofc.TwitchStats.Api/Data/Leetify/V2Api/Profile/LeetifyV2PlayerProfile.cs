@@ -26,8 +26,8 @@ public class LeetifyV2PlayerProfile
     [JsonPropertyName("rating")]
     public LeetifyV2Rating Rating { get; set; }
 
-    [JsonPropertyName("skills")]
-    public LeetifyV2Skills Skills { get; set; }
+    [JsonPropertyName("stats")]
+    public LeetifyV2Stats Stats { get; set; }
 
     [JsonPropertyName("recent_matches")]
     public List<LeetifyV2RecentMatch> RecentMatches { get; set; }

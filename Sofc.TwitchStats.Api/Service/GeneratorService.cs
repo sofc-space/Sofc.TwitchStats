@@ -2,6 +2,7 @@ using Microsoft.Extensions.Options;
 using Sofc.TwitchStats.Api.Data.Configuration;
 using Sofc.TwitchStats.Api.Data.Leetify;
 using Sofc.TwitchStats.Api.Data.Leetify.V2Api.Match;
+using Sofc.TwitchStats.Api.Data.Leetify.V2Api.Profile;
 using Sofc.TwitchStats.Api.Data.Totals;
 
 namespace Sofc.TwitchStats.Api.Service;
@@ -11,7 +12,10 @@ public class GeneratorService(LeetifyCacheService leetifyCacheService, IOptions<
     public async Task<TotalRecord> GenerateStats(string steam64Id, int threshold)
     {
         var profile = await leetifyCacheService.GetProfile(steam64Id);
+        var v2Profile = await leetifyCacheService.GetV2Profile(steam64Id);
         var total = new TotalRecord();
+
+        GenerateLeetifyTotals(v2Profile, total);
         
         var lastMatchDateTime = (DateTimeOffset?) null;
         var beginPremierFound = false;
@@ -48,6 +52,24 @@ public class GeneratorService(LeetifyCacheService leetifyCacheService, IOptions<
         return total;
     }
 
+    private void GenerateLeetifyTotals(LeetifyV2PlayerProfile v2Profile, TotalRecord total)
+    {
+        total.LeetifyTotal = new LeetifyTotal
+        {
+            Winrate = (decimal) v2Profile.Winrate,
+            Rating = v2Profile.Rating,
+            Ranks = v2Profile.Ranks,
+            Stats = v2Profile.Stats,
+        };
+
+        total.LeetifyTotal.Ranks.Leetify *= 100D;
+        
+        total.LeetifyTotal.Rating.Clutch *= 100D;
+        total.LeetifyTotal.Rating.Opening *= 100D;
+        total.LeetifyTotal.Rating.CtLeetify *= 100D;
+        total.LeetifyTotal.Rating.TLeetify *= 100D;
+    }
+
     private static void AddPremierSeasonStats(LeetifyListGame game, TotalRecord total)
     {
         if (game.RankType == 11)
@@ -74,8 +96,12 @@ public class GeneratorService(LeetifyCacheService leetifyCacheService, IOptions<
             total.HsRate = (decimal)total.HsKills / total.Kills;
         total.WinRate = (decimal) total.Win / (total.Win + total.Draw + total.Loss);
         total.PremierSeasonWinRate = (decimal) total.PremierSeasonWins / (total.PremierSeasonWins + total.PremierSeasonDraws + total.PremierSeasonLosses);
-        if(total.RoundSum > 0)
+        if (total.RoundSum > 0)
+        {
             total.Adr = (decimal) total.TotalDamage / total.RoundSum;
+            total.LeetifyRating = total.LeetifyRatingSum / total.RoundSum;
+            total.LeetifyRating *= 100;
+        }
 
         total.Kills += total.ShadowKills;
         total.Deaths += total.ShadowDeaths;
@@ -127,6 +153,7 @@ public class GeneratorService(LeetifyCacheService leetifyCacheService, IOptions<
         total.HsKills += player.TotalHsKills;
         total.TotalDamage += player.TotalDamage;
         total.RoundSum += player.RoundsCount;
+        total.LeetifyRatingSum += (decimal) player.LeetifyRating;
 
         if (player.RoundsWon > player.RoundsLost)
             total.Win++;

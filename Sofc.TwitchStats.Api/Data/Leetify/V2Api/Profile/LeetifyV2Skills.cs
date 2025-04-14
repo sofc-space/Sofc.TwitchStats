@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Sofc.TwitchStats.Api.Data.Leetify.V2Api.Profile;
 
-public class LeetifyV2Skills
+public class LeetifyV2Stats
 {
     [JsonPropertyName("accuracy_enemy_spotted")]
     public double AccuracyEnemySpotted { get; set; }

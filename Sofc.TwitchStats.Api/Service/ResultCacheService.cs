@@ -4,14 +4,14 @@ namespace Sofc.TwitchStats.Api.Service;
 
 public class ResultCacheService(GeneratorService generatorService, CacheService cacheService)
 {
-    public async Task<StatsResult> GetStatsResult(string steam64Id)
+    public async Task<StatsResult> GetStatsResult(string steam64Id, int sessionDetectionThreshold)
     {
-        var key = $"StatsResult:{steam64Id}";
+        var key = $"result:stats:{steam64Id}:{sessionDetectionThreshold}";
         var stats = await cacheService.GetObjectAsync<StatsResult>(key);
 
         if (stats != null) return stats;
         
-        var generatorStats = await generatorService.GenerateStats(steam64Id, 3);
+        var generatorStats = await generatorService.GenerateStats(steam64Id, sessionDetectionThreshold);
 
         stats = new StatsResult
         {

@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Refit;
 using Sofc.TwitchStats.Api.Data.Configuration;
 using Sofc.TwitchStats.Api.Service;
@@ -27,7 +29,13 @@ builder.Services.AddRefitClient<ILeetifyWebService>()
         c.BaseAddress = new Uri("https://api.cs-prod.leetify.com/api");
         c.Timeout = TimeSpan.FromSeconds(10);
     });
-builder.Services.AddRefitClient<ILeetifyV2WebService>()
+builder.Services.AddRefitClient<ILeetifyV2WebService>(s => new RefitSettings
+    {
+        ContentSerializer = new SystemTextJsonContentSerializer(new JsonSerializerOptions
+        {
+            NumberHandling = JsonNumberHandling.AllowReadingFromString
+        })
+    })
     .ConfigureHttpClient(c =>
     {
         c.BaseAddress = new Uri("https://api-public.cs-prod.leetify.com/v2");

@@ -92,27 +92,10 @@ public class GeneratorService(LeetifyCacheService leetifyCacheService, IOptions<
         
         var matchDetail = await leetifyCacheService.GetV2Match(guid);
 
-        //if (matchDetail.Status == LeetifyGameStatus.Error && gameDetail.GamePlayerRoundSkeletonStats.Any())
-        //{
-        //    GenerateSkeletonStats(gameDetail.GamePlayerRoundSkeletonStats.First(s => s.Steam64Id == steam64Id), total);
-        //}
-
         GeneratePlayerStats(game, matchDetail.Stats.First(s => s.Steam64Id == steam64Id), total, steam64Id);
         
     }
     
-    private static void GenerateSkeletonStats(LeetifyGameSkeletonStat stat, TotalRecord total)
-    {
-        total.Games++;
-        total.ShadowKills += stat.Kills;
-        total.ShadowDeaths += stat.Deaths;
-        if (stat.IsWon)
-            total.Win++;
-        else
-            total.Loss++;
-    }
-
-
     private void GenerateNonDetailedStats(LeetifyListGame game, TotalRecord total, string steam64Id)
     {
         total.Games++;

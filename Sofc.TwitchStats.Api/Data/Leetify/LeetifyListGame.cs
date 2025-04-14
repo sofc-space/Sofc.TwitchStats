@@ -9,5 +9,4 @@ public record LeetifyListGame
     public LeetifyMatchResult MatchResult { get; set; }
     public int Kills { get; set; }
     public int Deaths { get; set; }
-    public Dictionary<string, int> OwnTeamTotalLeetifyRatingRounds { get; set; }
 }

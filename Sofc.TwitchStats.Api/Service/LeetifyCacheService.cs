@@ -36,7 +36,7 @@ public class LeetifyCacheService(
         var obj = await cacheService.GetObjectAsync<T>(key);
         if (obj != null) return obj;
         obj = await request();
-        await cacheService.SetObjectAsync(key, obj, TimeSpan.FromMinutes(1));
+        await cacheService.SetObjectAsync(key, obj, expiry);
         return obj;
     }
 

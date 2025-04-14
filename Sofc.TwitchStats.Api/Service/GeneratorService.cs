@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Options;
 using Sofc.TwitchStats.Api.Data.Configuration;
 using Sofc.TwitchStats.Api.Data.Leetify;
-using Sofc.TwitchStats.Api.Data.Output;
+using Sofc.TwitchStats.Api.Data.Totals;
 
 namespace Sofc.TwitchStats.Api.Service;
 

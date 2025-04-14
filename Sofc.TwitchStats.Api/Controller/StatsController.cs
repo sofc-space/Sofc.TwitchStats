@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Sofc.TwitchStats.Api.Data.Api;
-using Sofc.TwitchStats.Api.Data.Output;
 using Sofc.TwitchStats.Api.Service;
 
 namespace Sofc.TwitchStats.Api.Controller;

@@ -1,6 +1,6 @@
 namespace Sofc.TwitchStats.Api.Data.Api;
 
-public class StatsResult
+public class  StatsResult
 {
     public int Kills { get; set; }
     public int Deaths { get; set; }

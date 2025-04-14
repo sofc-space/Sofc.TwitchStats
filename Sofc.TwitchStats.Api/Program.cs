@@ -17,30 +17,40 @@ builder.Services.AddCors(options =>
         });
 });
 
+var jsonSerializerOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+{
+    Converters =
+    {
+        new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
+    }
+};
+
+var refitSettings = new RefitSettings
+{
+    ContentSerializer = new SystemTextJsonContentSerializer(jsonSerializerOptions),
+};
+
+builder.Services.AddSingleton<JsonConfiguration>(s => new JsonConfiguration(jsonSerializerOptions));
+
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
-
-builder.Services.AddRefitClient<ILeetifyWebService>()
+builder.Services.AddRefitClient<ILeetifyWebService>(refitSettings)
     .ConfigureHttpClient(c =>
     {
         c.BaseAddress = new Uri("https://api.cs-prod.leetify.com/api");
         c.Timeout = TimeSpan.FromSeconds(10);
     });
-builder.Services.AddRefitClient<ILeetifyV2WebService>(s => new RefitSettings
-    {
-        ContentSerializer = new SystemTextJsonContentSerializer(new JsonSerializerOptions
-        {
-            NumberHandling = JsonNumberHandling.AllowReadingFromString
-        })
-    })
+
+builder.Services.AddRefitClient<ILeetifyV2WebService>(refitSettings)
     .ConfigureHttpClient(c =>
     {
         c.BaseAddress = new Uri("https://api-public.cs-prod.leetify.com/v2");
         c.Timeout = TimeSpan.FromSeconds(10);
     });
+
 builder.Services.AddScoped<GeneratorService>();
 builder.Services.AddScoped<LeetifyCacheService>();
 builder.Services.AddScoped<ResultCacheService>();
@@ -64,3 +74,16 @@ app.UseHttpsRedirection();
 app.MapControllers();
 
 app.Run();
+
+
+public class HttpLoggingHandler(ILogger<HttpLoggingHandler> logger) : DelegatingHandler
+{
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        Guid id = Guid.NewGuid();
+        HttpResponseMessage response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        logger.LogInformation("[{Id}] Request: {Request}", id, request);
+        logger.LogInformation("[{Id}] Response: {Response}", id, response);
+        return response;
+    }
+}

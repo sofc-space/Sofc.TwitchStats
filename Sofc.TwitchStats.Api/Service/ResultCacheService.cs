@@ -24,6 +24,7 @@ public class ResultCacheService(GeneratorService generatorService, CacheService 
             Winrate = generatorStats.WinRate,
             PremierStart = generatorStats.PremierStart!.Value,
             PremierCurrent = generatorStats.PremierCurrent!.Value,
+            PremierDifference = generatorStats.PremierDifference!.Value,
             Matches = generatorStats.Games,
             Wins = generatorStats.Win,
             Draws = generatorStats.Draw,

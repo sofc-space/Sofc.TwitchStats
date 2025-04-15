@@ -28,6 +28,7 @@ public record TotalRecord
 
     public int? PremierStart { get; set; }
     public int? PremierCurrent { get; set; }
+    public int? PremierDifference { get; set; }
     public int PremierSeasonWins { get; set; }
     public int PremierSeasonDraws { get; set; }
     public int PremierSeasonLosses { get; set; }

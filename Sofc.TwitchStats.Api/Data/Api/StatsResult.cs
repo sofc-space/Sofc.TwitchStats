@@ -12,6 +12,7 @@ public class  StatsResult
     public decimal Winrate { get; set; }
     public int PremierStart { get; set; }
     public int PremierCurrent { get; set; }
+    public int PremierDifference { get; set; }
     public int Matches { get; set; }
     public int Wins { get; set; }
     public int Draws { get; set; }

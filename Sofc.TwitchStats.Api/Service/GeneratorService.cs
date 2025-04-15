@@ -111,6 +111,8 @@ public class GeneratorService(LeetifyCacheService leetifyCacheService, IOptions<
         total.Kills += total.ShadowKills;
         total.Deaths += total.ShadowDeaths;
         total.KdRate = (decimal)total.Kills / total.Deaths;
+        
+        total.PremierDifference = total.PremierCurrent - total.PremierStart;
     }
 
     private async Task GenerateGameStats(LeetifyListGame game, string steam64Id, TotalRecord total)

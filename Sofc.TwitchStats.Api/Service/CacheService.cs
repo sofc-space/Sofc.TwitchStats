@@ -4,7 +4,7 @@ using StackExchange.Redis;
 
 namespace Sofc.TwitchStats.Api.Service;
 
-public class CacheService(IConnectionMultiplexer redis, JsonConfiguration jsonConfiguration)
+public class CacheService(IConnectionMultiplexer redis, JsonConfiguration jsonConfiguration) : ICacheService
 {
     private readonly IDatabase _database = redis.GetDatabase();
 
@@ -24,4 +24,23 @@ public class CacheService(IConnectionMultiplexer redis, JsonConfiguration jsonCo
         var str = await _database.StringGetAsync(key);
         return str.IsNull ? default : JsonSerializer.Deserialize<T>(str.ToString(), jsonConfiguration.JsonSerializerOptions);
     }
+}
+
+public class DebugCacheService : ICacheService
+{
+    public Task SetObjectAsync<T>(string key, T value, TimeSpan? expiry = null)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task<T?> GetObjectAsync<T>(string key)
+    {
+        return Task.FromResult(default(T));
+    }
+}
+
+public interface ICacheService
+{
+    Task SetObjectAsync<T>(string key, T value, TimeSpan? expiry = null);
+    Task<T?> GetObjectAsync<T>(string key);
 }

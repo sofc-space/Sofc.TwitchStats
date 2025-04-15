@@ -68,6 +68,11 @@ public class GeneratorService(LeetifyCacheService leetifyCacheService, IOptions<
         total.LeetifyTotal.Rating.Opening *= 100D;
         total.LeetifyTotal.Rating.CtLeetify *= 100D;
         total.LeetifyTotal.Rating.TLeetify *= 100D;
+        
+        total.LeetifyTotal.Stats.CtOpeningDuelSuccessPercentage /= 100D;
+        total.LeetifyTotal.Stats.TOpeningDuelSuccessPercentage /= 100D;
+        total.LeetifyTotal.Stats.TradedDeathsSuccessPercentage /= 100D;
+        total.LeetifyTotal.Stats.TradeKillsSuccessPercentage /= 100D;
     }
 
     private static void AddPremierSeasonStats(LeetifyListGame game, TotalRecord total)

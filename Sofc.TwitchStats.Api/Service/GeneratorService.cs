@@ -104,7 +104,7 @@ public class GeneratorService(LeetifyCacheService leetifyCacheService, IOptions<
         if (total.RoundSum > 0)
         {
             total.Adr = (decimal) total.TotalDamage / total.RoundSum;
-            total.LeetifyRating = total.LeetifyRatingSum / total.RoundSum;
+            total.LeetifyRating = total.LeetifyRatingSum / total.Games;
             total.LeetifyRating *= 100;
         }
 

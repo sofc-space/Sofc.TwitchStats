@@ -25,7 +25,8 @@ var jsonSerializerOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web
     Converters =
     {
         new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
-    }
+    },
+    NumberHandling = JsonNumberHandling.AllowReadingFromString
 };
 
 var refitSettings = new RefitSettings

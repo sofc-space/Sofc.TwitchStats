@@ -8,8 +8,8 @@ public class LeetifyV2Ranks
     public double Leetify { get; set; }
 
     [JsonPropertyName("premier")]
-    public int Premier { get; set; }
+    public int? Premier { get; set; }
 
     [JsonPropertyName("faceit")]
-    public int Faceit { get; set; }
+    public int? Faceit { get; set; }
 }

@@ -12,4 +12,7 @@ public class LeetifyV2Ranks
 
     [JsonPropertyName("faceit")]
     public int? Faceit { get; set; }
+
+    [JsonPropertyName("faceit_elo")]
+    public int? FaceitElo { get; set; }
 }

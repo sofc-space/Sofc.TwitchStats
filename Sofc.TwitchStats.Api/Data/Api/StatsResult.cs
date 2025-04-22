@@ -45,7 +45,7 @@ public class LeetifyRanksStatsResult
     public int Premier { get; set; }
     public int Faceit { get; set; }
     public int FaceitElo { get; set; }
-    public string Wingman { get; set; }
+    public int Wingman { get; set; }
     public IEnumerable<LeetifyRanksCompetitiveStatsResult> Competitive { get; set; }
 }
 

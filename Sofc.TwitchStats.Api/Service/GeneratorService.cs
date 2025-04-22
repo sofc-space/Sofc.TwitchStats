@@ -61,8 +61,6 @@ public class GeneratorService(LeetifyCacheService leetifyCacheService, IOptions<
             Ranks = v2Profile.Ranks,
             Stats = v2Profile.Stats,
         };
-
-        total.LeetifyTotal.Ranks.Leetify *= 100D;
         
         total.LeetifyTotal.Rating.Clutch *= 100D;
         total.LeetifyTotal.Rating.Opening *= 100D;

@@ -45,6 +45,14 @@ public class LeetifyRanksStatsResult
     public int Premier { get; set; }
     public int Faceit { get; set; }
     public int FaceitElo { get; set; }
+    public string Wingman { get; set; }
+    public IEnumerable<LeetifyRanksCompetitiveStatsResult> Competitive { get; set; }
+}
+
+public class LeetifyRanksCompetitiveStatsResult
+{
+    public string MapName { get; set; }
+    public int? Rank { get; set; }
 }
 
 public class LeetifyRatingStatsResult

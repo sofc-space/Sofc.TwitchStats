@@ -15,4 +15,10 @@ public class LeetifyV2Ranks
 
     [JsonPropertyName("faceit_elo")]
     public int? FaceitElo { get; set; }
+    
+    [JsonPropertyName("wingman")]
+    public int? Wingman { get; set; }
+    
+    [JsonPropertyName("competitive")]
+    public IEnumerable<LeetifyV2RanksCompetitive> Competitive { get; set; }
 }

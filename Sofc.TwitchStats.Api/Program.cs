@@ -101,5 +101,6 @@ public class LeetifyToResultMapperProfile : Profile
         CreateMap<LeetifyV2Ranks, LeetifyRanksStatsResult>();
         CreateMap<LeetifyV2Stats, LeetifyStatsStatsResult>();
         CreateMap<LeetifyV2Rating, LeetifyRatingStatsResult>();
+        CreateMap<LeetifyV2RanksCompetitive, LeetifyRanksCompetitiveStatsResult>();
     }
 }

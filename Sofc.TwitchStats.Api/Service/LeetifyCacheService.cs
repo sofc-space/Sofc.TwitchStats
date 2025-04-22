@@ -8,7 +8,7 @@ namespace Sofc.TwitchStats.Api.Service;
 public class LeetifyCacheService(
     ILeetifyWebService leetifyWebService,
     ILogger<LeetifyCacheService> logger,
-    CacheService cacheService,
+    ICacheService cacheService,
     ILeetifyV2WebService leetifyV2WebService)
 {
     private readonly ILogger<LeetifyCacheService> _logger = logger;

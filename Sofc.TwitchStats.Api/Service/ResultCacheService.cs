@@ -3,7 +3,7 @@ using Sofc.TwitchStats.Api.Data.Api;
 
 namespace Sofc.TwitchStats.Api.Service;
 
-public class ResultCacheService(GeneratorService generatorService, CacheService cacheService, IMapper mapper)
+public class ResultCacheService(GeneratorService generatorService, ICacheService cacheService, IMapper mapper)
 {
     public async Task<StatsResult> GetStatsResult(string steam64Id, int sessionDetectionThreshold)
     {

@@ -58,8 +58,12 @@ builder.Services.AddRefitClient<ILeetifyV2WebService>(refitSettings)
 builder.Services.AddScoped<GeneratorService>();
 builder.Services.AddScoped<LeetifyCacheService>();
 builder.Services.AddScoped<ResultCacheService>();
-builder.Services.AddScoped<CacheService>();
+#if DEBUG
+builder.Services.AddScoped<ICacheService, DebugCacheService>();
+#else
+builder.Services.AddScoped<ICacheService, CacheService>();
 builder.Services.AddScoped<IConnectionMultiplexer>(s => ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("Redis")!));
+#endif
 builder.Services.Configure<MetaOptions>(builder.Configuration.GetSection("Meta"));
 
 builder.Services.AddAutoMapper(typeof(LeetifyToResultMapperProfile));
